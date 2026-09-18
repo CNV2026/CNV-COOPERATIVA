@@ -96,6 +96,10 @@ tbody td.s{background:var(--sim)}
 tbody td.t{background:var(--tot);font-weight:800;color:var(--deepfg)}
 tbody tr.sum td{background:var(--surf);font-weight:800;color:var(--deepfg)}
 tbody tr.sum td.t{background:var(--sumtot)}
+tbody tr.opr td{background:var(--oprbg)}
+tbody tr.opr td.t{background:var(--tot)}
+tbody tr.opr td.s{background:var(--sim)}
+tbody tr.opr td.sm2{color:var(--oprfg);font-weight:800}
 tbody tr:hover td{background:var(--hover)}
 tbody tr.sum:hover td{background:var(--surf)}
 .z{color:var(--zero)}.pos{color:var(--pos)}.neg{color:var(--neg)}
@@ -176,9 +180,9 @@ td.mpin input{width:74px}
   --tc1:#5fd3c2; --tc2:#a9d97c; --tc3:#9d9ae8;
 }
 /* campos editaveis no escuro */
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--nfh:#2e2413;--nfb:#3d2f16;--nff:#e8b866}}
-:root[data-theme="dark"]{--nfh:#2e2413;--nfb:#3d2f16;--nff:#e8b866}
-:root{--nfh:#fdf1de;--nfb:#fffaf3;--nff:#8a5a12}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--nfh:#2e2413;--nfb:#3d2f16;--nff:#e8b866;--oprbg:rgba(157,154,232,.09);--oprfg:#9d9ae8}}
+:root[data-theme="dark"]{--nfh:#2e2413;--nfb:#3d2f16;--nff:#e8b866;--oprbg:rgba(157,154,232,.09);--oprfg:#9d9ae8}
+:root{--nfh:#fdf1de;--nfb:#fffaf3;--nff:#8a5a12;--oprbg:rgba(73,71,157,.055);--oprfg:#403E92}
 th.nf{background:var(--nfh);color:var(--nff)}
 td.nf{background:var(--nfb)}
 td.nf input{border-color:var(--nff)}
@@ -404,40 +408,45 @@ function tabA(me,op,self){
 }
 
 /* ---- meta x producao mes a mes, produto a produto ---- */
-function metaProd(me){
+function metaProd(me,op){
  var prods=[];
  if(st.cb==='ALL'){CB.forEach(function(c){c.p.forEach(function(x){prods.push({pi:x[0],n:x[1],c:c.c})})})}
  else{var ci=0;for(var i=0;i<CB.length;i++)if(CB[i].k===st.cb)ci=i;
       CB[ci].p.forEach(function(x){prods.push({pi:x[0],n:x[1],c:CB[ci].c})})}
  var h='<div class="blk" style="margin-top:24px"><div class="bt gr">Meta e produ&ccedil;&atilde;o m&ecirc;s a m&ecirc;s &mdash; '+(st.cb==='ALL'?'todos os produtos':title())+'</div>';
  if(!prods.length)return h+'<div class="tip w">O combo <b>Escolher o Sicoob</b> n&atilde;o tem produto nem meta na base de cad&ecirc;ncia &mdash; s&oacute; pontua. Escolha outro combo para ver meta e produ&ccedil;&atilde;o.</div></div>';
+ h+='<div class="note" style="margin:0 0 9px">Cada produto traz <b>minha coop</b> em cima e o <b>'+OPO+'</b> logo abaixo, em roxo, com os meses na mesma coluna. Voc&ecirc;: '+nome(me)+' &middot; '+OPO+': '+nome(op)+'.</div>';
  h+='<div class="leg"><span><i class="y"></i>Bateu a meta</span><span><i class="n"></i>N&atilde;o bateu</span><span><i class="a"></i>Sem meta no m&ecirc;s</span></div>';
  h+='<div class="tw"><table><thead><tr><th>Produto</th><th></th>';
  for(var m=0;m<12;m++)h+='<th'+(m>=NM?' class="s"':'')+'>'+MES[m]+'</th>';
  h+='<th class="t">Total<br>'+P_REAL+'</th></tr></thead><tbody>';
  prods.forEach(function(p){
-  var tm=0,tp=0,bat=0,com=0,td=0;
-  var r1='<tr><td rowspan="3"><span class="dot" style="background:'+p.c+'"></span>'+p.n+'</td><td class="sm2">Meta</td>';
-  var r2='<tr><td class="sm2">Produ&ccedil;&atilde;o</td>';
-  var r3='<tr class="sep"><td class="sm2">% da meta</td>';
-  for(var m=0;m<12;m++){
-   if(m<NM){
-    var vm=meta(me,p.pi,m),vp=prodm(me,p.pi,m),pc=pmeta(me,p.pi,m);
-    tm+=vm;tp+=vp;
-    r1+='<td'+(vm?'':' class="z"')+'>'+moeda(vm)+'</td>';
-    r2+='<td'+(vp?'':' class="z"')+'>'+moeda(vp)+'</td>';
-    if(pc===null)r3+='<td><span class="hit a">&ndash;</span></td>';
-    else{com++;var y=pc>=100;if(y)bat++;
-     r3+='<td><span class="hit '+(y?'y':'n')+'">'+(pc>=999?'999+':pc<=-999?'-999':pc)+'%</span></td>'}
-   }else{
-    var dg=mv_(p.pi,m);td+=dg;
-    r1+='<td class="s mpin"><input type="number" min="0" step="any" placeholder="digite" value="'+(dg||'')+'" onchange="setM('+p.pi+','+m+',parseFloat(this.value))"></td>';
-    r2+='<td class="s z">&mdash;</td>';
-    r3+='<td class="s z">&mdash;</td>'}}
-  h+=r1+'<td class="t">'+moeda(tm)+(td?'<span class="sm">+ '+moeda(td)+' digitado</span>':'')+'</td></tr>'
-   +r2+'<td class="t">'+moeda(tp)+'</td></tr>'
-   +r3+'<td class="t">'+bat+'/'+com+'</td></tr>'});
- h+='</tbody></table></div><div class="note"><b>'+MES[NM]+' a Dez em branco de prop&oacute;sito:</b> a base de cad&ecirc;ncia s&oacute; traz linhas at&eacute; '+MES[NM-1]+' &mdash; meta, produ&ccedil;&atilde;o e % dos meses seguintes n&atilde;o existem nela. Digite a meta quando ela sair; o total da linha mostra &agrave; parte o que voc&ecirc; digitou. O que voc&ecirc; digita vale enquanto a p&aacute;gina estiver aberta.</div></div>';
+  [{k:me,rot:'minha coop',rv:false},{k:op,rot:OPO,rv:true}].forEach(function(u,ui){
+   var tm=0,tp=0,bat=0,com=0,td=0,oc=u.rv?' class="opr"':'';
+   var r1='<tr'+oc+'>'+(ui?'':'<td rowspan="6"><span class="dot" style="background:'+p.c+'"></span>'+p.n+'</td>')+'<td class="sm2">Meta &middot; '+u.rot+'</td>';
+   var r2='<tr'+oc+'><td class="sm2">Produ&ccedil;&atilde;o &middot; '+u.rot+'</td>';
+   var r3='<tr'+(u.rv?' class="sep opr"':'')+'><td class="sm2">% da meta &middot; '+u.rot+'</td>';
+   for(var m=0;m<12;m++){
+    if(m<NM){
+     var vm=meta(u.k,p.pi,m),vp=prodm(u.k,p.pi,m),pc=pmeta(u.k,p.pi,m);
+     /* producao negativa vira 'sem meta' no codigo antigo; aqui mostramos o % de verdade */
+     if(pc===null&&vm>0)pc=Math.round(vp/vm*100);
+     tm+=vm;tp+=vp;
+     r1+='<td'+(vm?'':' class="z"')+'>'+moeda(vm)+'</td>';
+     r2+='<td'+(vp?'':' class="z"')+'>'+moeda(vp)+'</td>';
+     if(pc===null)r3+='<td><span class="hit a">&ndash;</span></td>';
+     else{com++;var y=pc>=100;if(y)bat++;
+      r3+='<td><span class="hit '+(y?'y':'n')+'">'+(pc>=999?'999+':pc<=-999?'-999':pc)+'%</span></td>'}
+    }else{
+     if(u.rv)r1+='<td class="s z">&mdash;</td>';
+     else{var dg=mv_(p.pi,m);td+=dg;
+      r1+='<td class="s mpin"><input type="number" min="0" step="any" placeholder="digite" value="'+(dg||'')+'" onchange="setM('+p.pi+','+m+',parseFloat(this.value))"></td>'}
+     r2+='<td class="s z">&mdash;</td>';
+     r3+='<td class="s z">&mdash;</td>'}}
+   h+=r1+'<td class="t">'+moeda(tm)+(td?'<span class="sm">+ '+moeda(td)+' digitado</span>':'')+'</td></tr>'
+    +r2+'<td class="t">'+moeda(tp)+'</td></tr>'
+    +r3+'<td class="t">'+bat+'/'+com+'</td></tr>'})});
+ h+='</tbody></table></div><div class="note"><b>'+MES[NM]+' a Dez em branco de prop&oacute;sito:</b> a base de cad&ecirc;ncia s&oacute; traz linhas at&eacute; '+MES[NM-1]+' &mdash; meta, produ&ccedil;&atilde;o e % dos meses seguintes n&atilde;o existem nela. Digite a meta quando ela sair &mdash; s&oacute; na sua linha; o total mostra &agrave; parte o que voc&ecirc; digitou. O que voc&ecirc; digita vale enquanto a p&aacute;gina estiver aberta.</div></div>';
  return h;
 }
 
@@ -497,7 +506,7 @@ function tabB(me,op,self){
   var da=rtot(r,me)-rtot(r,op);
   h+='<td class="t '+(da>=0?'pos':'neg')+'">'+(da>=0?'+':'')+f(da)+'</td></tr>'});
  h+='</tbody></table></div><div class="note">Verde: você fez mais pontos que ele naquele mês. Colunas em laranja: meses ainda não fechados.</div></div>';
- h+=metaProd(me);
+ h+=metaProd(me,op);
  document.getElementById('p-b').innerHTML=h;
 }
 
